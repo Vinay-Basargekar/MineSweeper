@@ -1,7 +1,6 @@
 // Display/UI
 
 import {
-	TILE_STATUSES,
 	createBoard,
 	markTile,
 	revealTile,
@@ -9,6 +8,8 @@ import {
 	checkLose,
 	positionMatch,
 	markedTilesCount,
+	Tile,
+	Position,
 } from "./minesweeper.ts";
 
 const BOARD_SIZE = 10;
@@ -18,9 +19,10 @@ let board = createBoard(
 	BOARD_SIZE,
 	getMinePositions(BOARD_SIZE, NUMBER_OF_MINES)
 );
-const boardElement = document.querySelector(".board");
-const minesLeftText = document.querySelector("[data-mine-count]");
-const messageText = document.querySelector(".subtext");
+const boardElement = document.querySelector<HTMLDivElement>(".board")!;
+const minesLeftText =
+	document.querySelector<HTMLSpanElement>("[data-mine-count]")!;
+const messageText = document.querySelector<HTMLDivElement>(".subtext")!;
 
 function render() {
 	boardElement.innerHTML = "";
@@ -39,17 +41,26 @@ function getTileElements() {
 	});
 }
 
-function tileToElement(tile) {
+function tileToElement(tile: Tile) {
 	const element = document.createElement("div");
 	element.dataset.status = tile.status;
-	element.dataset.x = tile.x;
-	element.dataset.y = tile.y;
-	element.textContent = tile.adjacentMinesCount || "";
+	element.dataset.x = tile.x.toString();
+	element.dataset.y = tile.y.toString();
+	element.textContent = tile.adjacentMinesCount
+		? tile.adjacentMinesCount.toString()
+		: "";
 	return element;
 }
 
 boardElement.addEventListener("click", (e) => {
-	if (!e.target.matches("[data-status]")) return;
+	if (
+		!(e.target instanceof HTMLElement) ||
+		!e.target.matches("[data-status]") ||
+		e.target.dataset.x == null ||
+		e.target.dataset.y == null
+	) {
+		return;
+	}
 
 	board = revealTile(board, {
 		x: parseInt(e.target.dataset.x),
@@ -59,8 +70,14 @@ boardElement.addEventListener("click", (e) => {
 });
 
 boardElement.addEventListener("contextmenu", (e) => {
-	if (!e.target.matches("[data-status]")) return;
-
+	if (
+		!(e.target instanceof HTMLElement) ||
+		!e.target.matches("[data-status]") ||
+		e.target.dataset.x == null ||
+		e.target.dataset.y == null
+	) {
+		return;
+	}
 	e.preventDefault();
 	board = markTile(board, {
 		x: parseInt(e.target.dataset.x),
@@ -69,11 +86,11 @@ boardElement.addEventListener("contextmenu", (e) => {
 	render();
 });
 
-boardElement.style.setProperty("--size", BOARD_SIZE);
+boardElement.style.setProperty("--size", BOARD_SIZE.toString());
 render();
 
 function listMinesLeft() {
-	minesLeftText.textContent = NUMBER_OF_MINES - markedTilesCount(board);
+	minesLeftText.textContent = `${NUMBER_OF_MINES - markedTilesCount(board)}`;
 }
 
 function checkGameEnd() {
@@ -92,19 +109,19 @@ function checkGameEnd() {
 		messageText.textContent = "You Lose";
 		board.forEach((row) => {
 			row.forEach((tile) => {
-				if (tile.status === TILE_STATUSES.MARKED) board = markTile(board, tile);
+				if (tile.status === "marked") board = markTile(board, tile);
 				if (tile.mine) board = revealTile(board, tile);
 			});
 		});
 	}
 }
 
-function stopProp(e) {
+function stopProp(e: Event) {
 	e.stopImmediatePropagation();
 }
 
-function getMinePositions(boardSize, numberOfMines) {
-	const positions = [];
+function getMinePositions(boardSize: number, numberOfMines: number) {
+	const positions: Position[] = [];
 
 	while (positions.length < numberOfMines) {
 		const position = {
@@ -120,6 +137,6 @@ function getMinePositions(boardSize, numberOfMines) {
 	return positions;
 }
 
-function randomNumber(size) {
+function randomNumber(size: number) {
 	return Math.floor(Math.random() * size);
 }

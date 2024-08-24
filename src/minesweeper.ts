@@ -2,12 +2,12 @@ import { times, range } from "lodash/fp";
 
 type TileStatus = (typeof TILE_STATUSES)[number];
 
-type Position = {
+export type Position = {
 	x: number;
 	y: number;
 };
 
-type Tile = Position & {
+export type Tile = Position & {
 	mine: boolean;
 	status: TileStatus;
 	adjacentMinesCount?: number;
